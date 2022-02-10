@@ -124,13 +124,13 @@ resource "aws_lambda_function" "stop_instances" {
 resource "aws_cloudwatch_event_rule" "start_cron" {
   name        = "trigger-start-lambda"
   description = "Call the start lambda function as a cronjob"
-  schedule_expression = "cron(45 1 * * SUN *)"
+  schedule_expression = "cron(30 23 * * SUN *)"
 }
 
 resource "aws_cloudwatch_event_rule" "stop_cron" {
   name        = "trigger-stop-lambda"
   description = "Call the stop lambda function as a cronjob"
-  schedule_expression = "cron(30 23 * * SUN *)"
+  schedule_expression = "cron(45 1 * * SUN *)"
 }
 
 resource "aws_cloudwatch_event_target" "start_lambda" {
