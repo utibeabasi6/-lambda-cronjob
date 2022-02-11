@@ -7,3 +7,6 @@ down:
 zip:
 	zip -j zips/start_instances.zip functions/start.py 
 	zip -j zips/stop_instances.zip functions/stop.py 
+
+init:
+	@terraform init
