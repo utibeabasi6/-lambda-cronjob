@@ -1,46 +1,43 @@
+data "aws_iam_policy_document" "lambda_role" {
+  statement {
+    actions = ["sts:AssumeRole"]
+    principals {
+      type        = "Service"
+      identifiers = ["lambda.amazonaws.com"]
+    }
+  }
+}
+
 resource "aws_iam_role" "role" {
   name = "${var.lambda_function_name}-role"
 
-  assume_role_policy = <<EOF
-{
-"Version": "2012-10-17",
-"Statement": [
-    {
-    "Action": "sts:AssumeRole",
-    "Principal": {
-        "Service": "lambda.amazonaws.com"
-        },
-    "Effect": "Allow",
-    "Sid": ""
-    }
-]
-}
-EOF
+  assume_role_policy = data.aws_iam_policy_document.lambda_role.json
 }
 
-resource "aws_iam_policy" "policy" {
-  name        = "${var.lambda_function_name}-policy"
-  description = "A policy to allow the lambda start the instances"
+data "aws_iam_policy_document" "lambda_policy" {
+  statement {
+    sid = "1"
 
-  policy = <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Action": [
+    actions = [
         "ec2:StartInstances",
         "ec2:StopInstances",
         "ec2:DescribeInstances",
         "logs:CreateLogGroup",
         "logs:CreateLogStream",
         "logs:PutLogEvents"
-      ],
-      "Effect": "Allow",
-      "Resource": "*"
-    }
-  ]
+    ]
+
+    resources = [
+      "*",
+    ]
+  }
 }
-EOF
+
+resource "aws_iam_policy" "policy" {
+  name        = "${var.lambda_function_name}-policy"
+  description = "A policy to allow the lambda start the instances"
+
+  policy = data.aws_iam_policy_document.lambda_policy.json
 }
 
 resource "aws_iam_role_policy_attachment" "policy_attatchment" {
@@ -61,14 +58,14 @@ resource "aws_lambda_function" "lambda" {
 }
 
 resource "aws_cloudwatch_event_rule" "cron" {
-  name        = "trigger-lambda"
+  name        = "trigger-${var.lambda_function_name}"
   description = "Call the start lambda function as a cronjob"
   schedule_expression = var.schedule_expression
 }
 
 resource "aws_cloudwatch_event_target" "lambda_target" {
   rule      = aws_cloudwatch_event_rule.cron.name
-  target_id = "TriggerLambda"
+  target_id = "trigger-${var.lambda_function_name}-id"
   arn       = aws_lambda_function.lambda.arn
 }
 
